@@ -1,9 +1,11 @@
 import conf 
 import discord
 from discord.ext import commands
-# intense = discord.Intents.default()
-# intense.members = True
-# client = discord.Client(intents=intense)
+import img_handler as imhl
+import os
+intense = discord.Intents.default()
+intense.members = True
+client = discord.Client(intents=intense)
 
 
 # @client.event
@@ -84,9 +86,9 @@ from discord.ext import commands
 
 
 # client.run(conf.bot_token)
+channel = 825339546887127081
 
-
-bot = commands.Bot(command_prefix = "!")
+bot = commands.Bot(command_prefix = "!", intents=intense)
 
 @bot.command(name = "hello")
 async def command_hello(ctx, *args):
@@ -109,13 +111,61 @@ async def command_repeat(ctx, *args):
     message = " ".join(args)
     if ctx.channel.id == 825339546887127081:
         msg = message
+        if msg=="":
+            msg += "Мне нечего тебе сказать!"
         await ctx.channel.send(msg)
+
+
+@bot.command(name = "get_member")
+async def command_get_member(ctx, member:discord.Member=None):
+    msg = ""
+    global channel
+    if ctx.channel.id == channel:
+        if member:
+            msg = f'Member {member.name} {"({member.nick})" if member.nick else ""} - {member.id}'
+
+
+        if msg==None:
+            msg="error"
+
+        await ctx.channel.send(msg)
+
+
+
+@bot.command(name = "mk")
+async def command_mk(ctx, f1:discord.Member=None, f2:discord.Member=None):
+    msg = ""
+    global channel
+    if ctx.channel.id == channel:
+        if f1 and f2:
+            msg = f'На арене непобедимый {f1.name} против бессмертного {f2.name}!'
+            await imhl.vs_create(f1.avatar_url, f2.avatar_url)
+
+            await ctx.channel.send(file=discord.File(os.path.join("./img/result.png"))  )
+        else:
+            msg = "Нужно два участника!"
+
+        if msg==None:
+            msg="error"
+
+             
 
 @bot.command(name = "get_members")
 async def command_get_members(ctx, *args):
-    message = " ".join(args)
     if ctx.channel.id == 825339546887127081:
-        msg = message
+        if ctx.author.guild.name == "Bots":
+            msg = ""
+            for idx, member in list(enumerate(ctx.author.guild.members)):
+                msg += f'{idx+1}. {member.name} { f"[{member.nick}]" if member.nick else "" } - {member.id}\n'
+        await ctx.channel.send(msg)
+
+@bot.command(name = "get_channels")
+async def command_get_сhannels(ctx, *args):
+    if ctx.channel.id == 825339546887127081:
+        msg = ""
+        if ctx.author.guild.name == "Bots":
+            for idx, channel in list(enumerate(ctx.author.guild.channels)):
+                msg += f'{idx+1}. {channel.name} - {channel.id}\n'
         await ctx.channel.send(msg)
     
 
