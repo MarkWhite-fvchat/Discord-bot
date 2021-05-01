@@ -3,6 +3,7 @@ import discord
 from discord.ext import commands
 import img_handler as imhl
 import os
+import random
 intense = discord.Intents.default()
 intense.members = True
 client = discord.Client(intents=intense)
@@ -92,13 +93,15 @@ bot = commands.Bot(command_prefix = "!", intents=intense)
 
 @bot.command(name = "hello")
 async def command_hello(ctx, *args):
-    if ctx.channel.id == 825339546887127081:
+    global channel
+    if ctx.channel.id == channel:
         msg = f'Hello, {ctx.author.name}. I am {bot.user.name} '
         await ctx.channel.send(msg)
 
 @bot.command(name = "about_me")
 async def command_about_me(ctx, *args):
-    if ctx.channel.id == 825339546887127081:
+    global channel
+    if ctx.channel.id == channel:
         if ctx.author.nick != None:
             msg = f'Your name is {ctx.author.name}, your nick is {ctx.author.nick}'
         else:
@@ -108,8 +111,9 @@ async def command_about_me(ctx, *args):
 
 @bot.command(name = "repeat")
 async def command_repeat(ctx, *args):
+    global channel
     message = " ".join(args)
-    if ctx.channel.id == 825339546887127081:
+    if ctx.channel.id == channel:
         msg = message
         if msg=="":
             msg += "Мне нечего тебе сказать!"
@@ -132,16 +136,16 @@ async def command_get_member(ctx, member:discord.Member=None):
 
 
 
-@bot.command(name = "mk")
-async def command_mk(ctx, f1:discord.Member=None, f2:discord.Member=None):
+@bot.command(name = "mka")
+async def command_mka(ctx, f1:discord.Member=None, f2:discord.Member=None):
     msg = ""
     global channel
     if ctx.channel.id == channel:
         if f1 and f2:
             msg = f'На арене непобедимый {f1.name} против бессмертного {f2.name}!'
-            await imhl.vs_create(f1.avatar_url, f2.avatar_url)
+            await imhl.vs_create_animated(f1.avatar_url, f2.avatar_url)
 
-            await ctx.channel.send(file=discord.File(os.path.join("./img/result.png"))  )
+            await ctx.channel.send(file=discord.File(os.path.join("./img/result.gif"))  )
         else:
             msg = "Нужно два участника!"
 
@@ -167,7 +171,99 @@ async def command_get_сhannels(ctx, *args):
             for idx, channel in list(enumerate(ctx.author.guild.channels)):
                 msg += f'{idx+1}. {channel.name} - {channel.id}\n'
         await ctx.channel.send(msg)
+
+
+@bot.command(name = "join")
+async def vc_join(ctx):
+    msg = ""
+    global channel
     
+    if ctx.channel.id==channel:
+        voice_channel = ctx.author.voice.channel
+        if voice_channel:
+            msg = f'Подключаюсь к {voice_channel.name}'
+            await ctx.channel.send(msg)
+            await voice_channel.connect()
+
+@bot.command(name = "leave")
+async def vc_leave(ctx):
+    msg = ""
+    global channel
+    
+
+    if ctx.channel.id==channel:
+        voice_channel = ctx.author.voice.channel
+        msg = f'Отключаюсь от {voice_channel.name}'
+        await ctx.channel.send(msg)
+        await ctx.voice_client.disconnect()
+
+
+@bot.command(name = "ost")
+async def vc_ost(ctx):
+    msg = ""
+    global channel
+    if ctx.channel.id==channel:
+        voice_client = discord.utils.get(bot.voice_clients, guild=ctx.guild)
+        msg = f'MORATL COMBAT'
+        await ctx.channel.send(msg)
+        await voice_client.play(discord.FFmpegPCMAudio( executable="./sound/ffmpeg.exe", source="./sound/mk.mp3"))
+
+
+@bot.command(name = "fight")
+async def command_fight(ctx):
+    msg = ""
+    global channel
+
+    if ctx.channel.id == channel and ctx.author.voice:
+
+        voice_channel = ctx.author.voice.channel
+        voice_client = discord.utils.get(bot.voice_clients, guild=ctx.guild)
+        if len(ctx.author.voice.channel.members) >= 2:
+
+            mass1 = ctx.author.voice.channel.members
+
+            a = random.randint(0, len(mass1) - 1)
+            f1 = mass1.pop(a)
+
+            b = random.randint(0, len(mass1) - 1)  
+            f2 = mass1[b]
+
+            msg = f'В бой вступают {f1.name} {f"({f1.nick})" if f1.nick else ""} и {f2.name}'
+
+            await imhl.vs_create_animated(f1.avatar_url, f2.avatar_url, f1.name, f2.name)
+            if ctx.voice_client != None:
+                await ctx.voice_client.disconnect()
+                await voice_channel.connect()
+            else:
+                await voice_channel.connect()
+            await ctx.channel.send(msg)
+            await ctx.channel.send(file=discord.File(os.path.join("./img/result.gif")))
+            voice_client = discord.utils.get(bot.voice_clients, guild=ctx.guild)
+
+        else:
+
+            f1 = ctx.author.voice.channel.members[0]
+            f2 = bot.user
+
+            msg = f'В бой вступают {f1.name} {f"({f1.nick})" if f1.nick else ""} и {f2.name}'
+
+            await imhl.vs_create_animated(f1.avatar_url, f2.avatar_url, f1.name, f2.name)
+            if ctx.voice_client != None:
+                await ctx.voice_client.disconnect()
+                await voice_channel.connect()
+            else:
+                await voice_channel.connect()
+            await ctx.channel.send(msg)
+            await ctx.channel.send(file=discord.File(os.path.join("./img/result.gif")))
+            voice_client = discord.utils.get(bot.voice_clients, guild=ctx.guild)
+            await voice_client.play(discord.FFmpegPCMAudio(executable="./sound/ffmpeg.exe", source="./sound/mk.mp3"))
+
+            
+            
+
+
+
+
 
 
 
